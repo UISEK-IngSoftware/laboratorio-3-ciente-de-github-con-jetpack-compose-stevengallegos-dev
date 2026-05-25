@@ -25,15 +25,38 @@ class MainActivity : ComponentActivity() {
             GithubClientTheme {
                 val listViewModel: RepoListViewModel = viewModel()
                 var currentScreen by remember { mutableStateOf("repoList") }
+                var repoToEdit by remember { mutableStateOf<ec.edu.uisek.githubclient.models.Repository?>(null) }
                 when (currentScreen) {
                     "repoList" -> RepoList(
-                        onNavigateToForm = { currentScreen = "repoForm" }
+                        viewModel = listViewModel,
+                        onNavigateToForm = {
+                            repoToEdit = null
+                            currentScreen = "repoForm"
+                        },
+                        onEditRepo = { repo ->
+                            repoToEdit = repo
+                            currentScreen = "repoForm"
+                        }
                     )
                     "repoForm" -> RepoForm(
                         onBackClick = { currentScreen = "repoList" },
                         onSaveSuccess = {
                             listViewModel.fetchRepos()
                             currentScreen = "repoList"
+                        },
+                        initialName = repoToEdit?.name ?: "",
+                        initialDescription = repoToEdit?.description ?: "",
+                        isEditMode = repoToEdit != null,
+                        onUpdateRepo = { newName, newDescription ->
+                            repoToEdit?.let { repo ->
+                                listViewModel.updateRepository(
+                                    owner = repo.owner.login,
+                                    repo = repo.name,
+                                    newName = newName,
+                                    newDescription = newDescription
+                                )
+                                currentScreen = "repoList"
+                            }
                         }
                     )
                 }

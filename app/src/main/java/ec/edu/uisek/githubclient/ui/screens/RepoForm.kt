@@ -40,15 +40,20 @@ import ec.edu.uisek.githubclient.viewmodels.RepoFormViewModel
 @Composable
 fun RepoForm (
     onBackClick: () -> Unit = {},
-    onSaveSuccess: () -> Unit ={},
+    onSaveSuccess: () -> Unit = {},
+    initialName: String = "",
+    initialDescription: String = "",
+    isEditMode: Boolean = false,
+    onUpdateRepo: (String, String) -> Unit = {_, _ ->},
     viewModel: RepoFormViewModel = viewModel()
+
 ) {
     val isLoading by viewModel.isLoading.collectAsState()
     val isSuccess by viewModel.isSuccess.collectAsState()
     val errorMsg by viewModel.errorMsg.collectAsState()
 
-    var name by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(initialName) }
+    var description by remember { mutableStateOf(initialDescription) }
 
     LaunchedEffect(isSuccess) {
         if (isSuccess) {
@@ -60,7 +65,14 @@ fun RepoForm (
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Nuevo repositorio") },
+                title = {
+                    Text(
+                        if (isEditMode)
+                            "Editar repositorio"
+                        else
+                            "Nuevo repositorio"
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
@@ -101,7 +113,13 @@ fun RepoForm (
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = { viewModel.createRepo(name, description) },
+                onClick = {
+                    if (isEditMode) {
+                        onUpdateRepo(name, description)
+                    } else {
+                        viewModel.createRepo(name, description)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !name.isBlank()
             ) {
